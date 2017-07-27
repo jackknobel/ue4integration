@@ -5,11 +5,8 @@
 #include "Map.h"
 #include "Runtime/Launch/Resources/Version.h"
 #include "Sound/SoundAttenuation.h"
-
-// UE Includes
 #include "AudioDevice.h"
-#include "Components/SceneComponent.h"
-
+#include "FMODStudioModule.h"
 #include "FMODAudioComponent.generated.h"
 
 // Event property
@@ -90,8 +87,9 @@ class FMODSTUDIO_API UFMODAudioComponent : public USceneComponent
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Sound)
 	TAssetPtr<class UFMODEvent> Event;
 
-	/** Stored parameters to apply next time we create an instance */
-	TMap<FName, float> StoredParameters;
+	/** Event parameter cache */
+	TMap<FName, float> ParameterCache;
+    bool bDefaultParameterValuesCached;
 
 	/** Stored properties to apply next time we create an instance */
 	float StoredProperties[EFMODEventProperty::Count];
@@ -223,7 +221,13 @@ class FMODSTUDIO_API UFMODAudioComponent : public USceneComponent
 	/** Apply Volume and LPF into event */
 	void ApplyVolumeLPF();
 
+    /** Cache default event parameter values */
+    void CacheDefaultParameterValues();
+
 public:
+
+    /** Internal play function which can play events in the editor */
+    void PlayInternal(EFMODSystemContext::Type Context);
 
 	/** Actual Studio instance handle */
 	FMOD::Studio::EventInstance* StudioInstance;

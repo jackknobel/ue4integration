@@ -28,6 +28,7 @@ UFMODAudioComponent::UFMODAudioComponent(const FObjectInitializer& ObjectInitial
 	bApplyOcclusionDirect = false;
 	bApplyOcclusionParameter = false;
 	bHasCheckedOcclusion = false;
+    bDefaultParameterValuesCached = false;
 
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.TickGroup = TG_PrePhysics;
@@ -323,6 +324,24 @@ void UFMODAudioComponent::ApplyVolumeLPF()
 	}
 }
 
+void UFMODAudioComponent::CacheDefaultParameterValues()
+{
+    if (Event)
+    {
+        TArray<FMOD_STUDIO_PARAMETER_DESCRIPTION> ParameterDescriptions;
+        Event->GetParameterDescriptions(ParameterDescriptions);
+        for (const FMOD_STUDIO_PARAMETER_DESCRIPTION& ParameterDescription : ParameterDescriptions)
+        {
+            if (!ParameterCache.Find(ParameterDescription.name))
+            {
+                ParameterCache.Add(ParameterDescription.name, ParameterDescription.defaultvalue);
+            }
+        }
+    }
+
+    bDefaultParameterValuesCached = true;
+}
+
 void UFMODAudioComponent::OnUnregister()
 {
 	// Route OnUnregister event.
@@ -389,7 +408,14 @@ void UFMODAudioComponent::SetEvent(UFMODEvent* NewEvent)
 	const bool bPlay = IsPlaying();
 
 	Stop();
-	Event = NewEvent;
+
+	if (Event != NewEvent)
+    {
+        Event = NewEvent;
+        
+        ParameterCache.Empty();
+        bDefaultParameterValuesCached = false;
+    }
 
 	if (bPlay)
 	{
@@ -559,13 +585,19 @@ void UFMODAudioComponent::SetProgrammerSound(FMOD::Sound* Sound)
 	ProgrammerSound = Sound;
 }
 
+
 void UFMODAudioComponent::Play()
+{
+    PlayInternal(EFMODSystemContext::Max);
+}
+
+void UFMODAudioComponent::PlayInternal(EFMODSystemContext::Type Context)
 {
 	Stop();
 
 	bHasCheckedOcclusion = false;
 
-	if (!FMODUtils::IsWorldAudible(GetWorld()))
+	if (!FMODUtils::IsWorldAudible(GetWorld(), Context == EFMODSystemContext::Editor))
 	{
 		return;
 	}
@@ -573,7 +605,7 @@ void UFMODAudioComponent::Play()
 	UE_LOG(LogFMOD, Verbose, TEXT("UFMODAudioComponent %p Play"), this);
 	
 	// Only play events in PIE/game, not when placing them in the editor
-	FMOD::Studio::EventDescription* EventDesc = IFMODStudioModule::Get().GetEventDescription(Event.Get());
+	FMOD::Studio::EventDescription* EventDesc = IFMODStudioModule::Get().GetEventDescription(Event.Get(), Context);
 	if (EventDesc != nullptr)
 	{		
 		EventDesc->getLength(&EventLength);
@@ -608,7 +640,7 @@ void UFMODAudioComponent::Play()
 			OnUpdateTransform(true);
 #endif
 			// Set initial parameters
-			for (auto Kvp : StoredParameters)
+			for (auto Kvp : ParameterCache)
 			{
 				FMOD_RESULT Result = StudioInstance->setParameterValue(TCHAR_TO_UTF8(*Kvp.Key.ToString()), Kvp.Value);
 				if (Result != FMOD_OK)
@@ -649,6 +681,7 @@ void UFMODAudioComponent::Stop()
 		StudioInstance = nullptr;
 	}
 	InteriorLastUpdateTime = 0.0;
+    bIsActive = false;
 }
 
 void UFMODAudioComponent::TriggerCue()
@@ -746,7 +779,7 @@ void UFMODAudioComponent::SetParameter(FName Name, float Value)
 			UE_LOG(LogFMOD, Warning, TEXT("Failed to set parameter %s"), *Name.ToString());
 		}
 	}
-	StoredParameters.FindOrAdd(Name) = Value;
+	ParameterCache.FindOrAdd(Name) = Value;
 }
 
 void UFMODAudioComponent::SetProperty(EFMODEventProperty::Type Property, float Value)
@@ -797,12 +830,13 @@ int32 UFMODAudioComponent::GetTimelinePosition()
 
 float UFMODAudioComponent::GetParameter(FName Name)
 {
-	float Value = 0.0f;
-	float* StoredParam = StoredParameters.Find(Name);
-	if (StoredParam)
-	{
-		Value = *StoredParam;
-	}
+    if (!bDefaultParameterValuesCached)
+    {
+        CacheDefaultParameterValues();
+    }
+
+    float* CachedValue = ParameterCache.Find(Name);
+    float Value = CachedValue ? *CachedValue : 0.0;
 	if (StudioInstance)
 	{
 		FMOD::Studio::ParameterInstance* ParamInst = nullptr;
