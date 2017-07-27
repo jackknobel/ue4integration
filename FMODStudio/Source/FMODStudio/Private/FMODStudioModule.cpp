@@ -108,7 +108,7 @@ class FFMODStudioModule : public IFMODStudioModule
 public:
 	/** IModuleInterface implementation */
 	FFMODStudioModule()
-	:	AuditioningInstance(nullptr),
+		: AuditioningInstance(nullptr),
 		ListenerCount(1),
 		bSimulating(false),
 		bIsInPIE(false),
@@ -118,7 +118,7 @@ public:
 		LowLevelLibHandle(nullptr),
 		StudioLibHandle(nullptr)
 	{
-		for (int i=0; i<EFMODSystemContext::Max; ++i)
+		for (int i = 0; i<EFMODSystemContext::Max; ++i)
 		{
 			StudioSystem[i] = nullptr;
 		}
@@ -141,7 +141,7 @@ public:
 	void CreateStudioSystem(EFMODSystemContext::Type Type);
 	void DestroyStudioSystem(EFMODSystemContext::Type Type);
 
-	bool Tick( float DeltaTime );
+	bool Tick(float DeltaTime);
 
 	void UpdateViewportPosition();
 
@@ -237,7 +237,7 @@ public:
 
 	/** True if simulating */
 	bool bSimulating;
-	
+
 	/** True if in PIE */
 	bool bIsInPIE;
 
@@ -256,7 +256,7 @@ public:
 	void* StudioLibHandle;
 };
 
-IMPLEMENT_MODULE( FFMODStudioModule, FMODStudio )
+IMPLEMENT_MODULE(FFMODStudioModule, FMODStudio)
 
 void FFMODStudioModule::LogError(int result, const char* function)
 {
@@ -270,7 +270,7 @@ bool FFMODStudioModule::LoadPlugin(const TCHAR* ShortName)
 	UE_LOG(LogFMOD, Log, TEXT("Loading plugin '%s'"), ShortName);
 
 	static const int ATTEMPT_COUNT = 2;
-	static const TCHAR* AttemptPrefixes[ATTEMPT_COUNT] = 
+	static const TCHAR* AttemptPrefixes[ATTEMPT_COUNT] =
 	{
 		TEXT(""),
 #if PLATFORM_64BITS
@@ -405,7 +405,7 @@ void FFMODStudioModule::StartupModule()
 		bUseSound = false;
 	}
 
-	if(FParse::Param(FCommandLine::Get(),TEXT("noliveupdate")))
+	if (FParse::Param(FCommandLine::Get(), TEXT("noliveupdate")))
 	{
 		bAllowLiveUpdate = false;
 	}
@@ -483,7 +483,7 @@ void FFMODStudioModule::CreateStudioSystem(EFMODSystemContext::Type Type)
 		StudioInitFlags |= FMOD_STUDIO_INIT_LIVEUPDATE;
 #endif
 	}
-	
+
 	verifyfmod(FMOD::Studio::System::create(&StudioSystem[Type]));
 	FMOD::System* lowLevelSystem = nullptr;
 	verifyfmod(StudioSystem[Type]->getLowLevelSystem(&lowLevelSystem));
@@ -493,7 +493,7 @@ void FFMODStudioModule::CreateStudioSystem(EFMODSystemContext::Type Type)
 	{
 		int DriverCount = 0;
 		verifyfmod(lowLevelSystem->getNumDrivers(&DriverCount));
-		for (int id=0; id<DriverCount; ++id)
+		for (int id = 0; id<DriverCount; ++id)
 		{
 			char DriverNameUTF8[256] = {};
 			verifyfmod(lowLevelSystem->getDriverInfo(id, DriverNameUTF8, sizeof(DriverNameUTF8), 0, 0, 0, 0));
@@ -556,10 +556,8 @@ void FFMODStudioModule::CreateStudioSystem(EFMODSystemContext::Type Type)
 	advSettings.maxAT9Codecs = Settings.RealChannelCount;
 #elif PLATFORM_XBOXONE
 	advSettings.maxXMACodecs = Settings.RealChannelCount;
-#elif ENGINE_MINOR_VERSION > 14
-	#if PLATFORM_SWITCH
-		advSettings.maxFADPCMCodecs = Settings.RealChannelCount;
-	#endif
+#elif ENGINE_MINOR_VERSION > 14 && PLATFORM_SWITCH
+	advSettings.maxFADPCMCodecs = Settings.RealChannelCount;
 #else
 	advSettings.maxVorbisCodecs = Settings.RealChannelCount;
 #endif
@@ -596,7 +594,7 @@ void FFMODStudioModule::DestroyStudioSystem(EFMODSystemContext::Type Type)
 	}
 }
 
-bool FFMODStudioModule::Tick( float DeltaTime )
+bool FFMODStudioModule::Tick(float DeltaTime)
 {
 	bListenerMoved = false;
 
@@ -641,7 +639,7 @@ void FFMODStudioModule::UpdateViewportPosition()
 	int ListenerIndex = 0;
 
 	UWorld* ViewportWorld = nullptr;
-	if(GEngine && GEngine->GameViewport)
+	if (GEngine && GEngine->GameViewport)
 	{
 		ViewportWorld = GEngine->GameViewport->GetWorld();
 	}
@@ -651,14 +649,14 @@ void FFMODStudioModule::UpdateViewportPosition()
 
 	if (ViewportWorld)
 	{
-		for( FConstPlayerControllerIterator Iterator = ViewportWorld->GetPlayerControllerIterator(); Iterator; ++Iterator )
+		for (FConstPlayerControllerIterator Iterator = ViewportWorld->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
 #if ENGINE_MINOR_VERSION > 14
 			APlayerController* PlayerController = Iterator->Get();
 #else
 			APlayerController* PlayerController = *Iterator;
 #endif
-			if( PlayerController )
+			if (PlayerController)
 			{
 #if ENGINE_MINOR_VERSION > 14
 				ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
@@ -724,16 +722,16 @@ void FFMODStudioModule::SetListenerPosition(int ListenerIndex, UWorld* World, co
 	{
 		FVector ListenerPos = ListenerTransform.GetTranslation();
 
-		FInteriorSettings InteriorSettings;
-		AAudioVolume* Volume = World->GetAudioSettings(ListenerPos, NULL, &InteriorSettings);
+		FInteriorSettings* InteriorSettings = (FInteriorSettings*)alloca(sizeof(FInteriorSettings)); // FinteriorSetting::FInteriorSettings() isn't exposed (possible UE4 bug???)
+		AAudioVolume* Volume = World->GetAudioSettings(ListenerPos, NULL, InteriorSettings);
 
-		Listeners[ListenerIndex].Velocity = DeltaSeconds > 0.f ? 
-												(ListenerTransform.GetTranslation() - Listeners[ ListenerIndex ].Transform.GetTranslation()) / DeltaSeconds
-												: FVector::ZeroVector;
+		Listeners[ListenerIndex].Velocity = DeltaSeconds > 0.f ?
+			(ListenerTransform.GetTranslation() - Listeners[ListenerIndex].Transform.GetTranslation()) / DeltaSeconds
+			: FVector::ZeroVector;
 
 		Listeners[ListenerIndex].Transform = ListenerTransform;
 
-		Listeners[ListenerIndex].ApplyInteriorSettings(Volume, InteriorSettings);
+		Listeners[ListenerIndex].ApplyInteriorSettings(Volume, *InteriorSettings);
 
 		// We are using a direct copy of the inbuilt transforms but the directions come out wrong.
 		// Several of the audio functions use GetFront() for right, so we do the same here.
@@ -741,7 +739,7 @@ void FFMODStudioModule::SetListenerPosition(int ListenerIndex, UWorld* World, co
 		const FVector Right = Listeners[ListenerIndex].GetFront();
 		const FVector Forward = Right ^ Up;
 
-		FMOD_3D_ATTRIBUTES Attributes = {{0}};
+		FMOD_3D_ATTRIBUTES Attributes = { { 0 } };
 		Attributes.position = FMODUtils::ConvertWorldVector(ListenerPos);
 		Attributes.forward = FMODUtils::ConvertUnitVector(Forward);
 		Attributes.up = FMODUtils::ConvertUnitVector(Up);
@@ -752,7 +750,7 @@ void FFMODStudioModule::SetListenerPosition(int ListenerIndex, UWorld* World, co
 		if (ListenerIndex >= ListenerCount)
 		{
 			Listeners[ListenerIndex] = FFMODListener();
-			ListenerCount = ListenerIndex+1;
+			ListenerCount = ListenerIndex + 1;
 			verifyfmod(System->setNumListeners(ListenerCount));
 		}
 		verifyfmod(System->setListenerAttributes(ListenerIndex, &Attributes));
@@ -823,7 +821,7 @@ void FFMODStudioModule::FinishSetListenerPosition(int NumListeners, float DeltaS
 		// Try to steal old entry
 		FFMODSnapshotEntry SnapshotEntry;
 		int SnapshotEntryIndex = -1;
-		for (int i=0; i<ReverbSnapshots.Num(); ++i)
+		for (int i = 0; i<ReverbSnapshots.Num(); ++i)
 		{
 			if (ReverbSnapshots[i].Snapshot == NewSnapshot)
 			{
@@ -865,7 +863,7 @@ void FFMODStudioModule::FinishSetListenerPosition(int NumListeners, float DeltaS
 		}
 	}
 	// Fade out all other entries
-	for (int i=0; i<ReverbSnapshots.Num(); ++i)
+	for (int i = 0; i<ReverbSnapshots.Num(); ++i)
 	{
 		UE_LOG(LogFMOD, Verbose, TEXT("Ramping intensity (%f,%f) -> %f"), ReverbSnapshots[i].FadeIntensityStart, ReverbSnapshots[i].FadeIntensityEnd, ReverbSnapshots[i].CurrentIntensity());
 		ReverbSnapshots[i].Instance->setParameterValue("Intensity", 100.0f * ReverbSnapshots[i].CurrentIntensity());
@@ -1044,7 +1042,7 @@ void FFMODStudioModule::LoadBanks(EFMODSystemContext::Type Type)
 		// Always load the master bank at startup
 		FString MasterBankPath = Settings.GetMasterBankPath();
 		UE_LOG(LogFMOD, Verbose, TEXT("Loading master bank: %s"), *MasterBankPath);
-		
+
 		TArray<NamedBankEntry> BankEntries;
 
 		FMOD::Studio::Bank* MasterBank = nullptr;
@@ -1074,7 +1072,7 @@ void FFMODStudioModule::LoadBanks(EFMODSystemContext::Type Type)
 				UE_LOG(LogFMOD, Verbose, TEXT("Loading all banks"));
 				TArray<FString> BankFiles;
 				Settings.GetAllBankPaths(BankFiles);
-				for ( const FString& OtherFile : BankFiles )
+				for (const FString& OtherFile : BankFiles)
 				{
 					if (Settings.SkipLoadBankName.Len() && OtherFile.Contains(Settings.SkipLoadBankName))
 					{
@@ -1108,7 +1106,7 @@ void FFMODStudioModule::LoadBanks(EFMODSystemContext::Type Type)
 					BusList.AddZeroed(BusCount);
 					verifyfmod(MasterBank->getBusList(BusList.GetData(), BusCount, &BusCount));
 					BusList.SetNum(BusCount);
-					for (int BusIdx=0; BusIdx<BusCount; ++BusIdx)
+					for (int BusIdx = 0; BusIdx<BusCount; ++BusIdx)
 					{
 						verifyfmod(BusList[BusIdx]->lockChannelGroup());
 					}
