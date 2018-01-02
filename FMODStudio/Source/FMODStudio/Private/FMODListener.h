@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "CoreMinimal.h"
+#include "Sound/AudioVolume.h"
+
 /** Struct encapsulating settings for interior areas. */
 struct FFMODInteriorSettings
 {

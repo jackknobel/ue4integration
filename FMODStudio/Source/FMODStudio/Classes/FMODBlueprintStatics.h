@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "UnrealString.h"
 #include "FMODAudioComponent.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "FMODBlueprintStatics.generated.h"
@@ -33,14 +32,16 @@ struct FFMODEventInstance
 UCLASS()
 class FMODSTUDIO_API UFMODBlueprintStatics : public UBlueprintFunctionLibrary
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+
+public:
 
 	/** Plays an event.  This returns an FMOD Event Instance.  The sound does not travel with any actor.
 	 * @param Event - event to play
 	 * @param bAutoPlay - Start the event automatically.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Audio|FMOD", meta=(HidePin="WorldContextObject", DefaultToSelf="WorldContextObject", AdvancedDisplay = "2", bAutoPlay = "true", UnsafeDuringActorConstruction = "true"))
-	static FFMODEventInstance PlayEvent2D(UObject* WorldContextObject, UFMODEvent* Event, bool bAutoPlay);
+	static FFMODEventInstance PlayEvent2D(const UObject* WorldContextObject, UFMODEvent* Event, bool bAutoPlay);
 
 	/** Plays an event at the given location. This returns an FMOD Event Instance.  The sound does not travel with any actor.
 	 * @param Event - event to play
@@ -48,7 +49,7 @@ class FMODSTUDIO_API UFMODBlueprintStatics : public UBlueprintFunctionLibrary
 	 * @param bAutoPlay - Start the event automatically.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Audio|FMOD", meta=(HidePin="WorldContextObject", DefaultToSelf="WorldContextObject", AdvancedDisplay = "2", bAutoPlay = "true", UnsafeDuringActorConstruction = "true"))
-	static FFMODEventInstance PlayEventAtLocation(UObject* WorldContextObject, UFMODEvent* Event, const FTransform& Location, bool bAutoPlay);
+	static FFMODEventInstance PlayEventAtLocation(const UObject* WorldContextObject, UFMODEvent* Event, const FTransform& Location, bool bAutoPlay);
 
 	/** Plays an event attached to and following the specified component.
 	 * @param Event - event to play

@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioPrivatePCH.h"
 #include "FMODBank.h"
+#include "FMODStudioPrivatePCH.h"
 #include "FMODStudioModule.h"
 
 UFMODBank::UFMODBank(const FObjectInitializer& ObjectInitializer)

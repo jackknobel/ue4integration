@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2015.
 
-#include "FMODStudioPrivatePCH.h"
 #include "FMODFileCallbacks.h"
+#include "FMODStudioPrivatePCH.h"
 #include "FMODUtils.h"
 
 FMOD_RESULT F_CALLBACK FMODLogCallback(FMOD_DEBUG_FLAGS flags, const char *file, int line, const char *func, const char *message)

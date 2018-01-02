@@ -6,7 +6,6 @@
 #include "fmod.hpp"
 
 #include "Runtime/Launch/Resources/Version.h"
-#include "Engine/Engine.h"
 
 #include "FMODStudioModule.h"
 

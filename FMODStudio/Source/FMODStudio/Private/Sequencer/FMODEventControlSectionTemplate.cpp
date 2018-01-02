@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioPrivatePCH.h"
 #include "FMODEventControlSectionTemplate.h"
+#include "FMODStudioPrivatePCH.h"
 #include "FMODAmbientSound.h"
 #include "FMODAudioComponent.h"
 #include "IMovieScenePlayer.h"
@@ -20,7 +20,7 @@ struct FFMODEventControlPreAnimatedToken : IMovieScenePreAnimatedToken
     }
     FFMODEventControlPreAnimatedToken& operator=(FFMODEventControlPreAnimatedToken&& RHS)
     {
-        Values = MoveTemp(RHS.Values);
+        Value = MoveTemp(RHS.Value);
         return *this;
     }
 #endif

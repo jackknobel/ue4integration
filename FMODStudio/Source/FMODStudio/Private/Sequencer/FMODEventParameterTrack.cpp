@@ -1,9 +1,9 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
+#include "FMODEventParameterTrack.h"
 #include "FMODStudioPrivatePCH.h"
 #include "FMODEventParameterSection.h"
 #include "FMODEventParameterSectionTemplate.h"
-#include "FMODEventParameterTrack.h"
 #include "IMovieScenePlayer.h"
 #include "MovieSceneCommonHelpers.h"
 

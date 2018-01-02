@@ -1,6 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
 #pragma once
+#include "EditorStyleSet.h"
 
 class FFMODStudioStyle : public FEditorStyle
 {

@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioPrivatePCH.h"
 #include "FMODBus.h"
+#include "FMODStudioPrivatePCH.h"
 #include "FMODStudioModule.h"
 
 UFMODBus::UFMODBus(const FObjectInitializer& ObjectInitializer)

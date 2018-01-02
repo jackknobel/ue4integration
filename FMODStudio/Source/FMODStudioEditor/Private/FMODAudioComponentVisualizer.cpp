@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioEditorPrivatePCH.h"
 #include "FMODAudioComponentVisualizer.h"
+#include "FMODStudioEditorPrivatePCH.h"
 #include "FMODAudioComponent.h"
 #include "FMODUtils.h"
 #include "FMODEvent.h"
@@ -24,7 +24,7 @@ void FFMODAudioComponentVisualizer::DrawVisualization(const UActorComponent* Com
 					const FColor AudioOuterRadiusColor(255, 153, 0);
 					const FColor AudioInnerRadiusColor(216, 130, 0);
 
-					const FTransform& Transform = AudioComp->ComponentToWorld;
+					const FTransform& Transform = AudioComp->GetComponentTransform();
 
 					float MinDistance = 0.0f;
 					float MaxDistance = 0.0f;

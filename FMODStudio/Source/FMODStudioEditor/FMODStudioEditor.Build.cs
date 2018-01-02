@@ -10,12 +10,9 @@ namespace UnrealBuildTool.Rules
         public FMODStudioEditor(TargetInfo Target)
     #endif
         {
-            bEnforceIWYU = false;
-            PCHUsage = PCHUsageMode.UseSharedPCHs;
-			
-			bFasterWithoutUnity = true;
+            PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-			PublicIncludePaths.AddRange(
+            PublicIncludePaths.AddRange(
 				new string[] {
 				}
 				);

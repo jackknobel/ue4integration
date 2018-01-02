@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioPrivatePCH.h"
 #include "FMODBlueprintStatics.h"
+#include "FMODStudioPrivatePCH.h"
 #include "FMODAudioComponent.h"
 #include "FMODSettings.h"
 #include "FMODStudioModule.h"
@@ -16,22 +16,17 @@
 /////////////////////////////////////////////////////
 // UFMODBlueprintStatics
 
-UFMODBlueprintStatics::UFMODBlueprintStatics(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
-
-FFMODEventInstance UFMODBlueprintStatics::PlayEvent2D(UObject* WorldContextObject, class UFMODEvent* Event, bool bAutoPlay)
+FFMODEventInstance UFMODBlueprintStatics::PlayEvent2D(const UObject* WorldContextObject, class UFMODEvent* Event, bool bAutoPlay)
 {
 	return PlayEventAtLocation(WorldContextObject, Event, FTransform(), bAutoPlay);
 }
 
-FFMODEventInstance UFMODBlueprintStatics::PlayEventAtLocation(UObject* WorldContextObject, class UFMODEvent* Event, const FTransform& Location, bool bAutoPlay)
+FFMODEventInstance UFMODBlueprintStatics::PlayEventAtLocation(const UObject* WorldContextObject, class UFMODEvent* Event, const FTransform& Location, bool bAutoPlay)
 {
 	FFMODEventInstance Instance;
 	Instance.Instance = nullptr;
 	
-	UWorld* ThisWorld = GEngine->GetWorldFromContextObject(WorldContextObject);
+	UWorld* ThisWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
 	if (FMODUtils::IsWorldAudible(ThisWorld, false))
 	{
 		FMOD::Studio::EventDescription* EventDesc = IFMODStudioModule::Get().GetEventDescription(Event);

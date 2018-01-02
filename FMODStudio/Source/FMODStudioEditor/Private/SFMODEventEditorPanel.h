@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Widgets/SCompoundWidget.h"
 #include "FMODEventEditor.h"
 
 namespace FMOD

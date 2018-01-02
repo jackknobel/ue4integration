@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioEditorPrivatePCH.h"
 #include "SFMODEventEditorPanel.h"
+#include "FMODStudioEditorPrivatePCH.h"
 #include "FMODStudioModule.h"
 #include "FMODUtils.h"
 #include "Input/Reply.h"

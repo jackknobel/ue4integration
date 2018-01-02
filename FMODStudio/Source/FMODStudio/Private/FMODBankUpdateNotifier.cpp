@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioPrivatePCH.h"
 #include "FMODBankUpdateNotifier.h"
+#include "FMODStudioPrivatePCH.h"
 #include "FMODSettings.h"
 
 FFMODBankUpdateNotifier::FFMODBankUpdateNotifier()

@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioEditorPrivatePCH.h"
 #include "FMODAmbientSoundDetails.h"
+#include "FMODStudioEditorPrivatePCH.h"
 #include "Toolkits/AssetEditorManager.h"
 #include "FMODAmbientSound.h"
 #include "FMODStudioModule.h"

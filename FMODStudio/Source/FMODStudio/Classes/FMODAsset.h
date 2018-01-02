@@ -2,9 +2,6 @@
 
 #pragma once
 
-#include "UObject/ObjectMacros.h"
-#include "UObject/Object.h"
-#include "Misc/Guid.h"
 #include "FMODAsset.generated.h"
 
 /**

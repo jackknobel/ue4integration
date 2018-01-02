@@ -1,7 +1,7 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioEditorPrivatePCH.h"
 #include "FMODEventParameterTrackEditor.h"
+#include "FMODStudioEditorPrivatePCH.h"
 #include "FMODAmbientSound.h"
 #include "FMODEvent.h"
 #include "FMODParameterSection.h"

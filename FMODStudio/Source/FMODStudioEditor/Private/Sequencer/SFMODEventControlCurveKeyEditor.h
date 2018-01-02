@@ -1,6 +1,11 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
 #pragma once
+#include "Widgets/SCompoundWidget.h"
+#include "ISequencer.h"
+
+class UMovieSceneSection;
+struct FIntegralCurve;
 
 /** A widget for editing a curve representing enum keys. */
 class SFMODEventControlCurveKeyEditor : public SCompoundWidget

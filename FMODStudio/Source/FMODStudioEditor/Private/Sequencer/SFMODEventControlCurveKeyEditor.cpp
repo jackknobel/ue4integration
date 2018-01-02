@@ -1,8 +1,8 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
+#include "SFMODEventControlCurveKeyEditor.h"
 #include "FMODStudioEditorPrivatePCH.h"
 #include "MovieSceneToolHelpers.h"
-#include "SFMODEventControlCurveKeyEditor.h"
 
 #define LOCTEXT_NAMESPACE "SFMODEventControlCurveKeyEditor"
 
