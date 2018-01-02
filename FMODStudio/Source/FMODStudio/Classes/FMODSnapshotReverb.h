@@ -2,18 +2,17 @@
 
 #pragma once
 
-#include "Runtime/Launch/Resources/Version.h"
 #include "Sound/ReverbEffect.h"
 #include "FMODSnapshotReverb.generated.h"
-/**1
+
+/**
  * FMOD Event Asset.
  */
 UCLASS()
 class FMODSTUDIO_API UFMODSnapshotReverb : public UReverbEffect
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
-public:
 	/** The unique Guid, which matches the one exported from FMOD Studio */
 	UPROPERTY()
 	FGuid AssetGuid;
@@ -25,12 +24,9 @@ public:
 	/** Force this to be an asset */
 	virtual bool IsAsset() const override { return bShowAsAsset; }
 
-protected:
-#if ENGINE_MINOR_VERSION > 14
-	#if WITH_EDITORONLY_DATA
+#if WITH_EDITORONLY_DATA
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	#endif // EDITORONLY_DATA
-#endif // ENGINE_MINOR_VERSION
+#endif // EDITORONLY_DATA
 };
 
 

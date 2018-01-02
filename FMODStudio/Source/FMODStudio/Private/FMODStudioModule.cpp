@@ -1,9 +1,10 @@
 // Copyright (c), Firelight Technologies Pty, Ltd. 2012-2017.
 
-#include "FMODStudioModule.h"
 #include "FMODStudioPrivatePCH.h"
 
+#include "Async.h"
 #include "FMODSettings.h"
+#include "FMODStudioModule.h"
 #include "FMODAudioComponent.h"
 #include "FMODBlueprintStatics.h"
 #include "FMODAssetTable.h"
@@ -117,13 +118,17 @@ public:
 		bAllowLiveUpdate(true),
 		LowLevelLibHandle(nullptr),
 		StudioLibHandle(nullptr),
-		bBanksLoaded(false)
+		bBanksLoaded(false),
+		bMixerPaused(false)
 	{
 		for (int i = 0; i < EFMODSystemContext::Max; ++i)
 		{
 			StudioSystem[i] = nullptr;
 		}
 	}
+
+	void HandleApplicationWillDeactivate() { AsyncTask(ENamedThreads::GameThread, [&]() { SetSystemPaused(true); }); }
+	void HandleApplicationHasReactivated() { AsyncTask(ENamedThreads::GameThread, [&]() { SetSystemPaused(false); }); }
 
 	virtual void StartupModule() override;
 	virtual void PostLoadCallback() override;
@@ -260,6 +265,8 @@ public:
 	void* LowLevelLibHandle;
 	void* StudioLibHandle;
 
+	/** True if the mixer has been paused by application deactivation */
+	bool bMixerPaused;
 };
 
 IMPLEMENT_MODULE(FFMODStudioModule, FMODStudio)
@@ -301,7 +308,7 @@ bool FFMODStudioModule::LoadPlugin(const TCHAR* ShortName)
 
 			UE_LOG(LogFMOD, Log, TEXT("Trying to load plugin file at location: %s"), *PluginPath);
 
-#if PLATFORM_UWP
+#if defined(PLATFORM_UWP) && PLATFORM_UWP
 			FPaths::MakePathRelativeTo(PluginPath, *(FPaths::RootDir() + TEXT("/")));
 #endif
 
@@ -360,7 +367,7 @@ FString FFMODStudioModule::GetDllPath(const TCHAR* ShortName, bool bExplicitPath
 	#else
 		return FString::Printf(TEXT("%s/Win32/%s.dll"), *BaseLibPath, ShortName);
 	#endif
-#elif PLATFORM_UWP
+#elif defined(PLATFORM_UWP) && PLATFORM_UWP
 		return FString::Printf(TEXT("%s/UWP64/%s.dll"), *BaseLibPath, ShortName);
 #else
 	UE_LOG(LogFMOD, Error, TEXT("Unsupported platform for dynamic libs"));
@@ -370,13 +377,7 @@ FString FFMODStudioModule::GetDllPath(const TCHAR* ShortName, bool bExplicitPath
 
 bool FFMODStudioModule::LoadLibraries()
 {
-#if ENGINE_MINOR_VERSION > 14
-	#if PLATFORM_SWITCH
-		return true; // Nothing to do
-	#endif
-#endif
-
-#if PLATFORM_IOS || PLATFORM_ANDROID || PLATFORM_LINUX || PLATFORM_MAC
+#if PLATFORM_IOS || PLATFORM_ANDROID || PLATFORM_LINUX || PLATFORM_MAC || PLATFORM_SWITCH
 	return true; // Nothing to do on those platforms
 #elif PLATFORM_HTML5
 	UE_LOG(LogFMOD, Error, TEXT("FMOD Studio not supported on HTML5"));
@@ -396,7 +397,7 @@ bool FFMODStudioModule::LoadLibraries()
 
 #if PLATFORM_WINDOWS && PLATFORM_64BITS
 	ConfigName += TEXT("64");
-#elif PLATFORM_UWP
+#elif defined(PLATFORM_UWP) && PLATFORM_UWP
 	ConfigName += TEXT("_X64");
 #endif
 
@@ -567,14 +568,12 @@ void FFMODStudioModule::CreateStudioSystem(EFMODSystemContext::Type Type)
 		advSettings.vol0virtualvol = Settings.Vol0VirtualLevel;
 		InitFlags |= FMOD_INIT_VOL0_BECOMES_VIRTUAL;
 	}
-#if PLATFORM_IOS || PLATFORM_ANDROID
+#if PLATFORM_IOS || PLATFORM_ANDROID || PLATFORM_SWITCH
 	advSettings.maxFADPCMCodecs = Settings.RealChannelCount;
 #elif PLATFORM_PS4
 	advSettings.maxAT9Codecs = Settings.RealChannelCount;
 #elif PLATFORM_XBOXONE
 	advSettings.maxXMACodecs = Settings.RealChannelCount;
-#elif ENGINE_MINOR_VERSION > 14 && PLATFORM_SWITCH
-	advSettings.maxFADPCMCodecs = Settings.RealChannelCount;
 #else
 	advSettings.maxVorbisCodecs = Settings.RealChannelCount;
 #endif
@@ -597,6 +596,10 @@ void FFMODStudioModule::CreateStudioSystem(EFMODSystemContext::Type Type)
 			if (!PluginName.IsEmpty())
 				LoadPlugin(*PluginName);
 		}
+		
+		// Add interrupt callbacks for Mobile
+		FCoreDelegates::ApplicationWillDeactivateDelegate.AddRaw(this, &FFMODStudioModule::HandleApplicationWillDeactivate);
+		FCoreDelegates::ApplicationHasReactivatedDelegate.AddRaw(this, &FFMODStudioModule::HandleApplicationHasReactivated);
 	}
 }
 
@@ -671,18 +674,10 @@ void FFMODStudioModule::UpdateViewportPosition()
 	{
 		for (FConstPlayerControllerIterator Iterator = ViewportWorld->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
-#if ENGINE_MINOR_VERSION > 14
 			APlayerController* PlayerController = Iterator->Get();
-#else
-			APlayerController* PlayerController = *Iterator;
-#endif
 			if (PlayerController)
 			{
-#if ENGINE_MINOR_VERSION > 14
 				ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
-#else
-				ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(PlayerController->Player);
-#endif
 				if (LocalPlayer)
 				{
 					FVector Location;
@@ -810,27 +805,17 @@ void FFMODStudioModule::FinishSetListenerPosition(int NumListeners, float DeltaS
 	for (int i = 0; i < ListenerCount; ++i)
 	{
 		AAudioVolume* CandidateVolume = Listeners[i].Volume;
-#if ENGINE_MINOR_VERSION >= 13
+		
 		if (BestVolume == nullptr || (CandidateVolume != nullptr && CandidateVolume->GetPriority() > BestVolume->GetPriority()))
-#else
-		if (BestVolume == nullptr || (CandidateVolume != nullptr && CandidateVolume->Priority > BestVolume->Priority))
-#endif
 		{
 			BestVolume = CandidateVolume;
 		}
 	}
 	UFMODSnapshotReverb* NewSnapshot = nullptr;
-#if ENGINE_MINOR_VERSION >= 13
+	
 	if (BestVolume && BestVolume->GetReverbSettings().bApplyReverb)
-#else
-	if (BestVolume && BestVolume->Settings.bApplyReverb)
-#endif
 	{
-#if ENGINE_MINOR_VERSION >= 13
 		NewSnapshot = Cast<UFMODSnapshotReverb>(BestVolume->GetReverbSettings().ReverbEffect);
-#else
-		NewSnapshot = Cast<UFMODSnapshotReverb>(BestVolume->Settings.ReverbEffect);
-#endif
 	}
 
 	if (NewSnapshot != nullptr)
@@ -875,11 +860,7 @@ void FFMODStudioModule::FinishSetListenerPosition(int NumListeners, float DeltaS
 		// Fade up
 		if (ReverbSnapshots[SnapshotEntryIndex].FadeIntensityEnd == 0.0f)
 		{
-#if ENGINE_MINOR_VERSION >= 13
 			ReverbSnapshots[SnapshotEntryIndex].FadeTo(BestVolume->GetReverbSettings().Volume, BestVolume->GetReverbSettings().FadeTime);
-#else
-			ReverbSnapshots[SnapshotEntryIndex].FadeTo(BestVolume->Settings.Volume, BestVolume->Settings.FadeTime);
-#endif
 		}
 	}
 	// Fade out all other entries
@@ -980,11 +961,28 @@ void FFMODStudioModule::SetSystemPaused(bool paused)
 {
 	if (StudioSystem[EFMODSystemContext::Runtime])
 	{
-		FMOD::System* LowLevelSystem = nullptr;
-		verifyfmod(StudioSystem[EFMODSystemContext::Runtime]->getLowLevelSystem(&LowLevelSystem));
-		FMOD::ChannelGroup* MasterChannelGroup = nullptr;
-		verifyfmod(LowLevelSystem->getMasterChannelGroup(&MasterChannelGroup));
-		verifyfmod(MasterChannelGroup->setPaused(paused));
+		if (bMixerPaused != paused)
+		{
+			FMOD::System* LowLevelSystem = nullptr;
+			verifyfmod(StudioSystem[EFMODSystemContext::Runtime]->getLowLevelSystem(&LowLevelSystem));
+
+			// Resume mixer before making calls for Android in particular
+			if (!paused)
+			{
+				LowLevelSystem->mixerResume();
+			}
+
+			FMOD::ChannelGroup* MasterChannelGroup = nullptr;
+			verifyfmod(LowLevelSystem->getMasterChannelGroup(&MasterChannelGroup));
+			verifyfmod(MasterChannelGroup->setPaused(paused));
+
+			if (paused)
+			{
+				LowLevelSystem->mixerSuspend();
+			}
+		}
+
+		bMixerPaused = paused;
 	}
 }
 
@@ -1245,4 +1243,3 @@ void FFMODStudioModule::StopAuditioningInstance()
 		AuditioningInstance = nullptr;
 	}
 }
-#undef LOCTEXT_NAMESPACE

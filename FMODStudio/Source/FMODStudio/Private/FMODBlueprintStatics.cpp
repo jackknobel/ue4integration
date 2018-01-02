@@ -93,11 +93,7 @@ class UFMODAudioComponent* UFMODBlueprintStatics::PlayEventAttached(class UFMODE
 #endif
 	AudioComponent->RegisterComponentWithWorld(AttachToComponent->GetWorld());
 
-#if ENGINE_MINOR_VERSION >= 12
 	AudioComponent->AttachToComponent(AttachToComponent, FAttachmentTransformRules::KeepRelativeTransform, AttachPointName);
-#else
-	AudioComponent->AttachTo(AttachToComponent, AttachPointName);
-#endif
 	if (LocationType == EAttachLocation::KeepWorldPosition)
 	{
 		AudioComponent->SetWorldLocation(Location);
@@ -295,6 +291,21 @@ void UFMODBlueprintStatics::BusSetMute(class UFMODBus* Bus, bool bMute)
 		if (result == FMOD_OK && bus != nullptr)
 		{
 			bus->setMute(bMute);
+		}
+	}
+}
+
+void UFMODBlueprintStatics::BusStopAllEvents(UFMODBus * Bus, EFMOD_STUDIO_STOP_MODE stopMode)
+{
+	FMOD::Studio::System* StudioSystem = IFMODStudioModule::Get().GetStudioSystem(EFMODSystemContext::Runtime);
+	if (StudioSystem != nullptr && Bus != nullptr)
+	{
+		FMOD::Studio::ID guid = FMODUtils::ConvertGuid(Bus->AssetGuid);
+		FMOD::Studio::Bus* bus = nullptr;
+		FMOD_RESULT result = StudioSystem->getBusByID(&guid, &bus);
+		if (result == FMOD_OK && bus != nullptr)
+		{
+			bus->stopAllEvents((FMOD_STUDIO_STOP_MODE)stopMode);
 		}
 	}
 }
